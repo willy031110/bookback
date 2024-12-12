@@ -1,6 +1,7 @@
 import { Schema, model, connect, Mongoose } from 'mongoose';
 import { logger } from '../middlewares/log';
 import { MongoInfo } from '../interfaces/MongoInfo';
+import { studentsModel } from '../orm/schemas/studentSchemas';
 export class MongoDB {
     
     DB: Mongoose | void | undefined
@@ -10,10 +11,13 @@ export class MongoDB {
 
         const url = `mongodb://${info.name}:${encodeURIComponent(info.password)}@${info.host}:${info.port}/${info.dbName}`;
 
-        this.init(url).then(() => {
+        this.init(url).then(async() => {
 
             logger.info(`suscess: connet to mongoDB @${url}`);
             this.isConneted = true;
+            const resp = await studentsModel.find({});
+            console.log(resp)
+
 
         }).catch(() => {
 
