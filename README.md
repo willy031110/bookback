@@ -150,8 +150,8 @@
 - 請求體：
 ```json
 {
-    "name": "新名字",
-    "email": "newemail@example.com"
+    "id": "id",
+    "name": "new name"
 }
 ```
 
