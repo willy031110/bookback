@@ -1,17 +1,15 @@
 import { Service } from "../abstract/Service";
 import { Student } from "../interfaces/Student";
-import { logger } from "../middlewares/log";
 import { studentsModel } from "../orm/schemas/studentSchemas";
-import { Document } from "mongoose"
-import { MongoDB } from "../utils/MongoDB";
 import { DBResp } from "../interfaces/DBResp";
 import { resp } from "../utils/resp";
+import { Types } from 'mongoose';
 
 type seatInfo = {
-    schoolName:string,
-    department:string,
-    seatNumber:string
-}
+    schoolName: string,
+    department: string,
+    seatNumber: string
+};
 
 export class UserService extends Service {
 
@@ -25,49 +23,80 @@ export class UserService extends Service {
         
     }
 
-    /**
-     * 新增學生
-     * @param info 學生資訊
-     * @returns resp
-     */
-    public async insertOne(info: Student): Promise<resp<DBResp<Student>|undefined>>{
 
-        const current = await this.getAllStudents()
-        const resp:resp<DBResp<Student>|undefined> = {
+    public async getStudentById(id: string): Promise<any> {
+        try {
+            // 確保傳入的 id 是 ObjectId 格式
+            if (!Types.ObjectId.isValid(id)) {
+                return {
+                    code: 400,
+                    message: "Invalid ID format",
+                    body: null,
+                };
+            }
+    
+            const student = await studentsModel.findById(id);
+    
+            if (!student) {
+                return {
+                    code: 404,
+                    message: "Student not found",
+                    body: null,
+                };
+            }
+    
+            return {
+                code: 200,
+                message: "Student found",
+                body: student,  // 返回學生資料
+            };
+        } catch (error) {
+            return {
+                code: 500,
+                message: "Server error",
+                body: null,
+            };
+        }
+    }
+
+    
+    public async insertOne(info: Student): Promise<resp<DBResp<Student> | undefined>> {
+        const current = await this.getAllStudents();
+        const resp: resp<DBResp<Student> | undefined> = {
             code: 200,
             message: "",
             body: undefined
-        }
+        };
 
-        if (current && current.length>0) {
-            try{
+        if (current && current.length > 0) {
+            try {
                 const nameValidator = await this.userNameValidator(info.userName);
-                if (current.length>=200) {
+                if (current.length >= 200) {
                     resp.message = "student list is full";
                     resp.code = 403;
-                }else{
+                } else {
                     if (nameValidator === "驗證通過") {
-                        info.sid = String(current.length+1) ;
+                        info.sid = String(current.length + 1);
                         info._id = undefined;
                         const res = new studentsModel(info);
                         resp.body = await res.save();
-                    }else{
+                    } else {
                         resp.code = 403;
                         resp.message = nameValidator;
                     }
                 }
-            } catch(error){
+            } catch (error) {
                 resp.message = "server error";
                 resp.code = 500;
             }
-        }else{
+        } else {
             resp.message = "server error";
             resp.code = 500;
         }
 
         return resp;
-
     }
+
 
     /**
      * 學生名字驗證器
