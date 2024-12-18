@@ -31,10 +31,10 @@
    npm run start
    ```
 
-5. 前端專案（如有分開）：
+5. 前端專案：
    - 進入前端資料夾：
      ```bash
-     cd client
+     cd react-ts-midteacher
      ```
    - 安裝依賴並啟動：
      ```bash
@@ -42,7 +42,7 @@
      npm start
      ```
 
-後端服務將運行在 `http://localhost:2083`，前端服務將運行在 `http://localhost:3000`。
+後端服務將運行在 `http://localhost:2083`，前端服務將運行在 `http://localhost:5173`。
 
 ---
 
