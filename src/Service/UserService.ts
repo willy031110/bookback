@@ -1,6 +1,6 @@
 import { Service } from "../abstract/Service";
-import { Student } from "../interfaces/Student";
-import { studentsModel } from "../orm/schemas/studentSchemas";
+import { books } from "../interfaces/book";
+import { BooksModel } from "../orm/schemas/booksSchemas";
 import { DBResp } from "../interfaces/DBResp";
 import { resp } from "../utils/resp";
 import { Types } from 'mongoose';
@@ -12,222 +12,57 @@ type seatInfo = {
 };
 
 export class UserService extends Service {
-
-    public async getAllStudents(): Promise<Array<DBResp<Student>>|undefined> {
+    
+    // 查詢所有書籍
+    public async getAllbooks(): Promise<Array<DBResp<books>> | undefined> {
         try {
-            const res:Array<DBResp<Student>> = await studentsModel.find({});
+            const res: Array<DBResp<books>> = await BooksModel.find({});
             return res;
         } catch (error) {
             return undefined;
         }
-        
     }
+// 根據書名或 ISBN 查詢書籍
+public async findBookByNameOrISBN(bookname: string, ISBN: string): Promise<DBResp<books> | null> {
+    try {
+        const query: any = {};
 
+        if (bookname) query.bookname = { $regex: bookname, $options: 'i' }; // 書名模糊查詢
+        if (ISBN) query.ISBN = ISBN; // 精確查詢 ISBN
 
-    public async getStudentById(id: string): Promise<any> {
-        try {
-            // 確保傳入的 id 是 ObjectId 格式
-            if (!Types.ObjectId.isValid(id)) {
-                return {
-                    code: 400,
-                    message: "Invalid ID format",
-                    body: null,
-                };
-            }
-    
-            const student = await studentsModel.findById(id);
-    
-            if (!student) {
-                return {
-                    code: 404,
-                    message: "Student not found",
-                    body: null,
-                };
-            }
-    
-            return {
-                code: 200,
-                message: "Student found",
-                body: student,  // 返回學生資料
-            };
-        } catch (error) {
-            return {
-                code: 500,
-                message: "Server error",
-                body: null,
-            };
-        }
+        const book = await BooksModel.findOne(query);
+        return book;
+    } catch (error) {
+        return null;
     }
-
-    
-    public async insertOne(info: Student): Promise<resp<DBResp<Student> | undefined>> {
-        const current = await this.getAllStudents();
-        const resp: resp<DBResp<Student> | undefined> = {
-            code: 200,
-            message: "",
-            body: undefined
-        };
-
-        if (current && current.length > 0) {
-            try {
-                const nameValidator = await this.userNameValidator(info.userName);
-                if (current.length >= 200) {
-                    resp.message = "student list is full";
-                    resp.code = 403;
-                } else {
-                    if (nameValidator === "驗證通過") {
-                        info.sid = String(current.length + 1);
-                        info._id = undefined;
-                        const res = new studentsModel(info);
-                        resp.body = await res.save();
-                    } else {
-                        resp.code = 403;
-                        resp.message = nameValidator;
-                    }
-                }
-            } catch (error) {
-                resp.message = "server error";
-                resp.code = 500;
-            }
-        } else {
-            resp.message = "server error";
-            resp.code = 500;
-        }
-
-        return resp;
-    }
-
-
-    /**
-     * 學生名字驗證器
-     * @param userName 學生名字
-     * tku ee 0787
-     * ee 科系縮寫
-     *  0787 四碼
-     * 座號檢查，跟之前有重複就噴錯  只能寫沒重複的號碼
-     */
-    public async userNameValidator(userName: string): Promise<
-    '學生名字格式不正確，應為 tku + 科系縮寫 + 四碼座號，例如: tkubm1760' | '座號已存在' | '校名必須為 tku' | '座號格式不正確，必須為四位數字。' | '驗證通過'
-    > {
-
-        if (userName.length < 7) { 
-            return ('學生名字格式不正確，應為 tku + 科系縮寫 + 四碼座號，例如: tkubm1760');
-        }
-
-        const info = this.userNameFormator(userName);
-
-        if (info.schoolName !== 'tku') {
-            return '校名必須為 tku';
-        }
-    
-        // 驗證座號(正則不想寫可以給 gpt 寫, 記得測試就好)
-        const seatNumberPattern = /^\d{4}$/; // 驗證4個數字
-        
-        if (!seatNumberPattern.test(info.seatNumber)) {
-            return '座號格式不正確，必須為四位數字。';
-        }
-
-        if (await this.existingSeatNumbers(info.seatNumber)) {
-            return '座號已存在'
-        }
-
-        return '驗證通過'
-        
-    }
-
-    /**
-     * 用戶名格式化
-     * @param userName 用戶名
-     * @returns seatInfo
-     */
-    public userNameFormator(userName: string){
-        const info:seatInfo = {
-            schoolName: userName.slice(0, 3),
-            department: userName.slice(3, userName.length - 4),
-            seatNumber: userName.slice(-4)
-        }
-        return info
-    }
-
-    /**
-     * 檢查用戶名是否存在
-     * @param SeatNumber 
-     * @returns boolean
-     */
-    public async existingSeatNumbers(SeatNumber:string):Promise<boolean>{
-        const students = await this.getAllStudents();
-        let exist = false
-        if (students) {
-            students.forEach((student)=>{
-                const info = this.userNameFormator(student.userName)
-                if (info.seatNumber === SeatNumber) {
-                    exist = true;
-                }
-            })
-        }
-        return exist
-    }
-
-    /**
-     * 刪除一筆用戶
-     * @param id: 用戶_id
-     * @returns resp<any>
-     */
-    
-    public async deleteById(id:string){
-
-        const resp:resp<any> = {
-            code: 200,
-            message:"",
-            body:undefined
-        }
-
-        try{
-            const res = await studentsModel.deleteOne({_id:id});
-            resp.message="sucess";
-            resp.body=res;
-        }catch(error){
-            resp.message=error as string;
-            resp.code=500;
-        }
-        return resp;
-        
-    }
-
-    /**
-     * 更新一筆用戶名
-     * @param id id uid
-     * @param name 新名字
-     * @returns 狀態
-     */
-    public async updateNameByID(id:string,name:string){
-
-        const resp:resp<DBResp<Student>|undefined> = {
-            code:200,
-            message:"",
-            body:undefined
-        }
-
-        const user = await studentsModel.findById(id)
-        
-        if(user){
-            try {
-                user.name = name;
-                await user.save();
-                resp.body=user;
-                resp.message = "update sucess";
-            } catch (error) {
-                resp.code = 500;
-                resp.message = "sever error";
-            }
-        }else{
-            resp.code = 404;
-            resp.message = "user not found";
-        }
-
-        return resp;
-
-    }
-
 }
+    // 新增書籍
+    public async createBook(newBook: books): Promise<DBResp<books> | undefined> {
+        try {
+            const res: DBResp<books> = await BooksModel.create(newBook);
+            return res;
+        } catch (error) {
+            return undefined;
+        }
+    }
 
+    // 更新書籍
+    public async updateBook(bookId: string, updateData: Partial<books>): Promise<DBResp<books> | undefined> {
+        try {
+            const res: DBResp<books> | null = await BooksModel.findByIdAndUpdate(bookId, updateData, { new: true });
+            return res || undefined;
+        } catch (error) {
+            return undefined;
+        }
+    }
+
+    // 刪除書籍
+    public async deleteBook(bookId: string): Promise<boolean> {
+        try {
+            const res = await BooksModel.findByIdAndDelete(bookId);
+            return !!res;
+        } catch (error) {
+            return false;
+        }
+    }
+}

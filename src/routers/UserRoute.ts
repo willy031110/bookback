@@ -1,6 +1,5 @@
 import { Route } from "../abstract/Route";
 import { UserController } from "../controller/UserController";
-import { logger } from "../middlewares/log";
 
 export class UserRoute extends Route {
     
@@ -9,31 +8,32 @@ export class UserRoute extends Route {
 
     constructor() {
         super()
-        this.url = '/api/v1/user/'
-        this.setRoutes()
+        this.url = '/api/v1/user/';
+        this.setRoutes();
     }
 
     protected setRoutes(): void {
-        
+        // 查詢所有書籍
         this.router.get(`${this.url}findAll`, (req, res) => {
             this.Contorller.findAll(req, res);
-        })
+        });
+        // 根據書名或 ISBN 查詢書籍
+        this.router.get(`${this.url}findBook`, (req, res) => {
+            this.Contorller.findBook(req, res);
+        });
+        // 新增書籍
+        this.router.post(`${this.url}create`, (req, res) => {
+            this.Contorller.create(req, res);
+        });
 
-        // 新增查詢單個學生的路由
-        this.router.get(`${this.url}:id`, (req, res) => {
-            this.Contorller.getOne(req, res);  // 呼叫 UserController 中的 getOne 方法
-        })
+        // 更新書籍
+        this.router.put(`${this.url}update/:id`, (req, res) => {
+            this.Contorller.update(req, res);
+        });
 
-        this.router.post(`${this.url}insertOne`, (req, res) => {
-            this.Contorller.insertOne(req, res);
-        })
-        
-        this.router.delete(`${this.url}deleteById`, (req, res) => {
-            this.Contorller.deleteById(req, res);
-        })
-
-        this.router.put(`${this.url}updateNameByID`, (req, res) => {
-            this.Contorller.updateNameByID(req, res);
-        })
+        // 刪除書籍
+        this.router.delete(`${this.url}delete/:id`, (req, res) => {
+            this.Contorller.delete(req, res);
+        });
     }
 }

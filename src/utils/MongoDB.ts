@@ -1,7 +1,7 @@
 import { Schema, model, connect, Mongoose } from 'mongoose';
 import { logger } from '../middlewares/log';
 import { MongoInfo } from '../interfaces/MongoInfo';
-import { studentsModel } from '../orm/schemas/studentSchemas';
+import { BooksModel } from '../orm/schemas/booksSchemas';
 export class MongoDB {
     
     DB: Mongoose | void | undefined
@@ -15,7 +15,7 @@ export class MongoDB {
 
             logger.info(`suscess: connet to mongoDB @${url}`);
             this.isConneted = true;
-            const resp = await studentsModel.find({});
+            const resp = await BooksModel.find({});
             console.log(resp)
 
 
