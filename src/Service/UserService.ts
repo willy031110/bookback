@@ -36,6 +36,18 @@ public async findBookByNameOrISBN(bookname: string, ISBN: string): Promise<DBRes
         return null;
     }
 }
+// 根據書籍 ID 查詢書籍
+public async findBookById(id: string): Promise<DBResp<books> | null> {
+    try {
+        // 使用 mongoose 的 findById 方法查詢書籍資料
+        const book = await BooksModel.findById(id);
+        return book ? book : null;  // 返回查詢結果
+    } catch (error) {
+        console.error("Error finding book by ID:", error);
+        return null;  // 如果查詢失敗，返回 null
+    }
+}
+
     // 新增書籍
     public async createBook(newBook: books): Promise<DBResp<books> | undefined> {
         try {

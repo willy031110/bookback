@@ -4,6 +4,7 @@ import { UserService } from "../Service/UserService";
 import { resp } from "../utils/resp";
 import { DBResp } from "../interfaces/DBResp";
 import { books } from "../interfaces/book";
+import { BooksModel } from "../orm/schemas/booksSchemas";
 
 export class UserController extends Contorller {
     protected service: UserService;
@@ -56,6 +57,24 @@ public async findBook(Request: Request, Response: Response) {
         res.code = 404;
         res.message = "Book not found";
         Response.status(404).send(res);
+    }
+}
+// 根據書籍 ID 查詢書籍
+public async findBookById(req: Request, res: Response): Promise<Response> {
+    const { ID } = req.query;  // 從 req.query 獲取 ID 參數
+    if (!ID) {
+        return res.status(400).json({ code: 400, message: "Please provide the book id" });
+    }
+
+    try {
+        const book = await BooksModel.findById(ID);  // 使用 findById 根據 ID 查詢
+        if (book) {
+            return res.json({ code: 200, message: "Find success", body: book });
+        } else {
+            return res.status(404).json({ code: 404, message: "Book not found" });
+        }
+    } catch (error) {
+        return res.status(500).json({ code: 500, message: "Server error" });
     }
 }
 

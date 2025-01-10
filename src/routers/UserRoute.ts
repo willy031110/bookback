@@ -21,6 +21,10 @@ export class UserRoute extends Route {
         this.router.get(`${this.url}findBook`, (req, res) => {
             this.Contorller.findBook(req, res);
         });
+        // 根據 ID 查詢書籍
+this.router.get(`${this.url}findBookById`, (req, res) => {
+    this.Contorller.findBookById(req, res);
+});
         // 新增書籍
         this.router.post(`${this.url}create`, (req, res) => {
             this.Contorller.create(req, res);
